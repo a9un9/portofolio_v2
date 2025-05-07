@@ -1,0 +1,168 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User'); // Import model User
+
+// GET - Ambil data untuk client
+exports.getClientUser = async (req, res) => {
+  try {
+    // Fetch data for client, no need for user_id filtering if public
+    
+    const data = await User.findAll({
+    });
+
+    // If no data found, return a 404
+    if (!data) {
+      return res.status(404).json({ message: 'Data kosong' });
+    }
+
+    // Send the data as response
+    res.json(data);
+  } catch (err) {
+    // If an error occurs, send an error response
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Register
+exports.register = async (req, res) => {
+  const { name, email, username, password } = req.body;
+  try {
+    const userExists = await User.findOne({ where: { email } });
+    if (userExists) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    const usernameExists = await User.findOne({ where: { username } });
+    if (usernameExists) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({
+      name,
+      email,
+      username,
+      password: hashedPassword,
+      created_at: new Date(), // Set explicitly created_at
+      created_by: username, // Set explicitly to null or omit
+      updated_at: null, // Set explicitly to null or omit
+      deskripsi,
+    }, {
+      raw: true // Ensures timestamps are handled manually
+    });
+
+    res.status(201).json({ user: newUser });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Login
+exports.login = async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ where: { username } });
+
+    // Jika username tidak ditemukan
+    if (!user) {
+      return res.status(400).json({ message: 'Username tidak ditemukan' });
+    }
+
+    // Memeriksa apakah password cocok
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(400).json({ message: 'Password salah' });
+    }
+
+    // Jika login berhasil, buat token
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    // Kirim token dan data user
+    res.json({ 
+      token, 
+      user: { 
+        id: user.id, 
+        name: user.name, 
+        username: user.username, 
+        email: user.email 
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get User Data
+exports.getUserData = async (req, res) => {
+  const userId = req.user.id;  // ID pengguna yang ada dalam token
+
+  try {
+    const user = await User.findByPk(userId);  // Mencari pengguna berdasarkan ID
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);  // Mengembalikan data pengguna
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Update User Data
+exports.updateUserData = async (req, res) => {
+  const userId = req.user.id;
+  const { name, email, username, password, deskripsi } = req.body;
+
+  try {
+    // Cek apakah user ada
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let isUpdated = false;
+
+    // Ambil username pengguna yang sedang melakukan pembaruan
+    const updatedBy = req.user.username;  // Username dari token yang di-authenticate
+
+    // Update field jika ada perubahan
+    if (name && name !== user.name) {
+      user.name = name;
+      isUpdated = true;
+    }
+    if (email && email !== user.email) {
+      user.email = email;
+      isUpdated = true;
+    }
+    if (username && username !== user.username) {
+      user.username = username;
+      isUpdated = true;
+    }
+    if (password && password !== user.password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+      isUpdated = true;
+    }
+    if (deskripsi && deskripsi !== user.deskripsi) {
+      user.deskripsi = deskripsi;
+      isUpdated = true;
+    }
+
+    // Simpan perubahan dan update updated_by
+    if (isUpdated) {
+      user.updated_by = username;  // Menambahkan updated_by
+      await user.save(); // `updated_at` akan diperbarui otomatis
+    }
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      deskripsi: user.deskripsi,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

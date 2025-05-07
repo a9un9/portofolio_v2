@@ -1,0 +1,119 @@
+.education {
+  padding: 100px 20px;
+  background: #f1f5f9;
+  position: relative;
+}
+
+.content-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.content-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.content-header h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.timeline {
+  position: relative;
+  margin: 50px 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  background: #3498db;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.timeline-item {
+  position: relative;
+  width: 50%;
+  padding: 20px 40px;
+  box-sizing: border-box;
+  margin-bottom: 20px; /* Lebih dekat antar item */
+}
+
+.timeline-item.left {
+  left: 0;
+  text-align: right;
+}
+
+.timeline-item.right {
+  left: 50%;
+  text-align: left;
+}
+
+.timeline-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+/* Titik bulat biru */
+/* .timeline-item::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px; 
+  transform: translateY(-50%); 
+  width: 16px;
+  height: 16px;
+  background: #3498db;
+  border-radius: 50%;
+  z-index: 3;
+  border: 3px solid #fff; 
+} */
+
+/* Responsif */
+@media (max-width: 768px) {
+  .timeline-item {
+    width: 100%;
+    padding-left: 70px;
+    padding-right: 25px;
+    text-align: left;
+  }
+
+  .timeline-item.left,
+  .timeline-item.right {
+    left: 0;
+  }
+
+  .timeline::before {
+    left: 30px;
+  }
+
+  .timeline-item::before {
+    left: 30px;
+    transform: translateY(-50%);
+  }
+}
+
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 200px;
+  padding: 20px;
+}
+
+.error p {
+  color: #e74c3c;
+  font-size: 1.2rem;
+  margin: 0;
+}
